@@ -1,20 +1,23 @@
-import { Canvas } from "@react-three/fiber";
+import { Canvas } from '@react-three/fiber';
+import { Environment, PerspectiveCamera, Stats, CameraControls } from '@react-three/drei';
+import Tile from './components/Tile';
+import { useEffect, useRef, useState } from 'react';
+import Ghost from './components/Ghost';
+import { cameraConfig } from './config/camera-config';
 import {
-  OrbitControls,
-  Environment,
-  OrthographicCamera,
-} from "@react-three/drei";
-import Tile from "./components/Tile";
-import { useEffect, useState } from "react";
-import Ghost from "./components/Ghost";
+  helper_ghostToggle,
+  helper_hideGhosts,
+  helper_resurrectGhosts,
+  helper_showGhosts,
+} from './helpers/ghost-functions';
 
 function App() {
   return (
-    <Canvas style={{ height: "100vh", width: "100vw" }}>
+    <Canvas style={{ height: '100vh', width: '100vw' }}>
       <Environment preset="apartment" />
       <Scene />
-      <OrthographicCamera position={[5, 5, 5]} zoom={100} makeDefault />
-      <OrbitControls maxPolarAngle={Math.PI / 3} minPolarAngle={Math.PI / 4} />
+      <PerspectiveCamera position={[0, 2, 2]} makeDefault />
+      <Stats />
     </Canvas>
   );
 }
@@ -26,72 +29,50 @@ function Scene() {
     2: [0, 1],
     3: [0, -1],
   };
-  const [neighbors, setNeighbors] = useState({ "0,0": [0, 0, 0, 0] });
+  const cameraControlsRef = useRef();
+  const [neighbors, setNeighbors] = useState({
+    '0,0': [0, 0, 0, 0],
+  });
   const [ghosts, setGhosts] = useState([0, 0, 0, 0]);
-  const [isGhostVisible, setIsGhostVisible] = useState(false);
+  const [isAnyTileClicked, setIsAnyTileClicked] = useState({ is: false, tile: null });
+  const [latestTiles, setLatestTiles] = useState([
+    [0, 0],
+    [0, 1],
+  ]);
 
-  // useEffect(() => {
-  //   console.log(neighbors);
-  // }, [neighbors]);
+  useEffect(() => {
+    const position = [
+      3 * latestTiles[1][0] - 2 * latestTiles[0][0],
+      1 * cameraConfig.positionOffset,
+      3 * latestTiles[1][1] - 2 * latestTiles[0][1],
+    ];
+    const lookAt = [latestTiles[0][0], 0, latestTiles[0][1]];
+    cameraControlsRef.current?.setLookAt(...position, ...lookAt, true);
+  }, [latestTiles]);
 
-  function showGhosts(id) {
-    const tile = id.split(",").map((coord) => parseInt(coord));
-    setGhosts((state) =>
-      state.map((item, key) => {
-        const newItem = [
-          tile[0] + direction[key][0],
-          tile[1] + direction[key][1],
-        ];
-        const newItemKey = `${newItem[0]},${newItem[1]}`;
-        if (!neighbors[newItemKey]) {
-          return newItem;
-        }
-        return item;
-      })
-    );
-  }
+  const showGhosts = helper_showGhosts({ setGhosts, direction, neighbors });
 
-  function hideGhosts() {
-    setGhosts([0, 0, 0, 0]);
-  }
+  const hideGhosts = () => helper_hideGhosts({ setGhosts });
 
-  function ghostToggle(id) {
-    if (isGhostVisible) {
-      setIsGhostVisible(false);
-      hideGhosts();
-    } else {
-      setIsGhostVisible(true);
-      showGhosts(id);
-    }
-  }
+  const ghostToggle = helper_ghostToggle({ isAnyTileClicked, setIsAnyTileClicked, hideGhosts, showGhosts });
 
-  function resurrectGhosts(id) {
-    ghostToggle(id);
-    const itemKey = `${id[0]},${id[1]}`;
-    const defaultNeighbors = [0, 0, 0, 0];
-    setNeighbors((state) => ({
-      ...state,
-      [itemKey]: defaultNeighbors.map((_, key) => {
-        const neighborKey = `${id[0] + direction[key[0]]},${
-          id[1] + direction[key[1]]
-        }`;
-        if (neighbors[neighborKey]) {
-          return 1;
-        }
-        return 0;
-      }),
-    }));
-  }
+  const resurrectGhosts = helper_resurrectGhosts({
+    ghostToggle,
+    setLatestTiles,
+    setNeighbors,
+    direction,
+    neighbors,
+    isAnyTileClicked,
+  });
 
   return (
     <>
+      <CameraControls ref={cameraControlsRef} enabled />
       {Object.keys(neighbors).map((id, key) => {
         return <Tile {...{ id, ghostToggle }} key={key} />;
       })}
       {ghosts.map((position, key) => {
-        return position ? (
-          <Ghost onGhostClick={resurrectGhosts} position={position} key={key} />
-        ) : null;
+        return position ? <Ghost onGhostClick={resurrectGhosts} position={position} key={key} /> : null;
       })}
     </>
   );
