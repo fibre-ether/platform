@@ -1,22 +1,34 @@
-const getTileCoords = (id) => {
-  return id.split(',').map((coord) => parseInt(coord));
-};
+// const getTileCoords = (id) => {
+//   return id.split(',').map((coord) => parseInt(coord));
+// };
 
-const getTileID = (tile) => {
-  return `${tile[0]},${tile[1]}`;
-};
+import { convertCoordsToOrigin } from "../config/defaults";
+
+
+// const getTileID = (tile) => {
+//   return `${tile[0]},${tile[1]}`;
+// };
 
 export const helper_showGhosts =
   ({ setGhosts, direction, neighbors }) =>
-  (id) => {
-    const tile = getTileCoords(id);
+  (coords) => {
     setGhosts((state) =>
       state.map((item, key) => {
-        const newItem = [tile[0] + direction[key][0], tile[1] + direction[key][1]];
-        const newItemKey = `${newItem[0]},${newItem[1]}`;
-        if (!neighbors[newItemKey]) {
+        const newItem = [
+          coords[0] + direction[key][0],
+          coords[1] + direction[key][1],
+        ];
+        // const newItemKey = `${newItem[0]},${newItem[1]}`;
+        // console.log(
+        //   `neighbouring element: neighbors[${newItem[0]}][${newItem[0]}] -> ${
+        //     neighbors[newItem[0]][newItem[1]]
+        //   }`
+        // );
+        if (!neighbors[newItem[0]][newItem[1]]) {
+          // console.log('returning new ghost: ' + String(newItem));
           return newItem;
         }
+        // console.log('returning item: ' + item);
         return item;
       })
     );
@@ -28,33 +40,39 @@ export const helper_hideGhosts = ({ setGhosts }) => {
 
 export const helper_ghostToggle =
   ({ isAnyTileClicked, setIsAnyTileClicked, hideGhosts, showGhosts }) =>
-  (id) => {
+  (coords) => {
+    /* TODO: make it so that if a tile cannot have anymore ghosts, then isanytileclicked will not be true if that tile is clicked */
     if (isAnyTileClicked.is) {
       setIsAnyTileClicked({ is: false, tile: null });
       hideGhosts();
     } else {
-      setIsAnyTileClicked({ is: true, tile: getTileCoords(id) });
-      showGhosts(id);
+      setIsAnyTileClicked({ is: true, tile: coords });
+      showGhosts(coords);
     }
   };
 
 export const helper_resurrectGhosts =
-  ({ ghostToggle, setLatestTiles, setNeighbors, direction, neighbors, isAnyTileClicked }) =>
-  (tile) => {
-    ghostToggle(tile);
+  ({
+    ghostToggle,
+    setLatestTiles,
+    setNeighbors,
+    // direction,
+    // neighbors,
+    isAnyTileClicked,
+  }) =>
+  (coords) => {
+    ghostToggle(coords);
 
-    setLatestTiles([tile, isAnyTileClicked.tile]);
+    setLatestTiles([
+      convertCoordsToOrigin(coords),
+      convertCoordsToOrigin(isAnyTileClicked.tile),
+    ]);
+    const ghostX = coords[0];
+    const ghostY = coords[1];
 
-    const itemKey = getTileID(tile);
-    const defaultNeighbors = [0, 0, 0, 0];
-    setNeighbors((state) => ({
-      ...state,
-      [itemKey]: defaultNeighbors.map((_, key) => {
-        const neighborKey = `${tile[0] + direction[key[0]]},${tile[1] + direction[key[1]]}`;
-        if (neighbors[neighborKey]) {
-          return 1;
-        }
-        return 0;
-      }),
-    }));
+    setNeighbors((state) => [
+      ...state.slice(0, ghostX),
+      [...state[ghostX].slice(0, ghostY), 1, ...state[ghostX].slice(ghostY+1)],
+      ...state.slice(ghostX + 1),
+    ]);
   };

@@ -42,6 +42,7 @@ function Scene() {
   const [isfirstTimeDataFetched, setIsfirstTimeDataFetched] = useState(false);
   /* TODO: add a loader to wait for the above boolean to be true*/
   const [neighbors, setNeighbors] = useState(defaultNeighbors);
+  /* TODO: change name to board everywhere */
   const [ghosts, setGhosts] = useState([0, 0, 0, 0]);
   const [isAnyTileClicked, setIsAnyTileClicked] = useState({
     is: false,
@@ -70,22 +71,22 @@ function Scene() {
     cameraControlsRef.current?.setLookAt(...position, ...lookAt, true);
   }, [latestTiles]);
 
-  useEffect(() => {
-    getFirstTimeNeighbors({ setIsfirstTimeDataFetched, setNeighbors });
-    const neighborsRef = ref(database, NEIGHBORS);
-    return onValue(neighborsRef, (snapshot) => {
-      const data = snapshot.val();
-      // console.log(data);
-      setNeighbors(data);
-    });
-  }, []);
+  // useEffect(() => {
+  //   getFirstTimeNeighbors({ setIsfirstTimeDataFetched, setNeighbors });
+  //   const neighborsRef = ref(database, NEIGHBORS);
+  //   return onValue(neighborsRef, (snapshot) => {
+  //     const data = snapshot.val();
+  //     // console.log(data);
+  //     setNeighbors(data);
+  //   });
+  // }, []);
 
-  useEffect(() => {
-    if (isfirstTimeDataFetched) {
-      set(ref(database, NEIGHBORS), neighbors);
-      console.log('setting neighbors');
-    }
-  }, [neighbors, isfirstTimeDataFetched]);
+  // useEffect(() => {
+  //   if (isfirstTimeDataFetched) {
+  //     set(ref(database, NEIGHBORS), neighbors);
+  //     console.log('setting neighbors');
+  //   }
+  // }, [neighbors, isfirstTimeDataFetched]);
 
   /* HELPER FUNCTIONS */
   /* TODO: create interface to pass all required states to ghost functions and return all required curried functions */
@@ -112,8 +113,23 @@ function Scene() {
   return (
     <>
       <CameraControls ref={cameraControlsRef} enabled zoom={false} />
-      {Object.keys(neighbors).map((id, key) => {
-        return <Tile {...{ id, ghostToggle, color: tileColor }} key={key} />;
+      {neighbors.map((row, rowKey) => {
+        return (
+          <mesh key={rowKey}>
+            {row.map((item, colKey) => {
+              return item === 1 ? (
+                <Tile
+                  {...{
+                    coords: [rowKey, colKey],
+                    ghostToggle,
+                    color: tileColor,
+                  }}
+                  key={colKey}
+                />
+              ) : null;
+            })}
+          </mesh>
+        );
       })}
       {ghosts.map((position, key) => {
         return position ? (
