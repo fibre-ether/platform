@@ -1,11 +1,11 @@
-import { Box } from "@react-three/drei";
-import { MeshStandardMaterial } from "three";
-import { tile } from "../config/tile-config";
-import { useMemo } from "react";
+import { Box } from '@react-three/drei';
+import { MeshStandardMaterial } from 'three';
+import { tile } from '../config/tile-config';
+import { useMemo } from 'react';
 
-function Tile({ id, ghostToggle }) {
-  const positionCoords = id.split(",").map((coord) => parseInt(coord));
-  const mat = useMemo(() => new MeshStandardMaterial(), []);
+function Tile({ id, ghostToggle, color }) {
+  const positionCoords = id.split(',').map((coord) => parseInt(coord));
+  const mat = useMemo(() => new MeshStandardMaterial({ color }), [color]);
   return (
     <>
       <Box

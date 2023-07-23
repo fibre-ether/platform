@@ -1,16 +1,17 @@
-import { Box } from "@react-three/drei";
-import { MeshStandardMaterial } from "three";
-import { tile } from "../config/tile-config";
-import { useMemo } from "react";
+import { Box } from '@react-three/drei';
+import { MeshStandardMaterial } from 'three';
+import { tile } from '../config/tile-config';
+import { useMemo } from 'react';
 
-function Ghost({ onGhostClick, position }) {
+function Ghost({ onGhostClick, position, color, transparency }) {
   const mat = useMemo(
     () =>
       new MeshStandardMaterial({
         transparent: true,
-        opacity: 0.2,
+        opacity: transparency,
+        color,
       }),
-    []
+    [color, transparency]
   );
 
   return (

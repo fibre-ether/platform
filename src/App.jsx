@@ -1,5 +1,10 @@
 import { Canvas } from '@react-three/fiber';
-import { Environment, PerspectiveCamera, Stats, CameraControls } from '@react-three/drei';
+import {
+  Environment,
+  PerspectiveCamera,
+  Stats,
+  CameraControls,
+} from '@react-three/drei';
 import Tile from './components/Tile';
 import { useEffect, useRef, useState } from 'react';
 import Ghost from './components/Ghost';
@@ -10,6 +15,15 @@ import {
   helper_resurrectGhosts,
   helper_showGhosts,
 } from './helpers/ghost-functions';
+import { Controls } from './helpers/controls';
+import { onValue, ref, set } from 'firebase/database';
+import { NEIGHBORS, database } from './config/firebase';
+import {
+  deleteAllNeighbors,
+  getFirstTimeNeighbors,
+} from './helpers/database-functions';
+import { defaultLatestTiles, defaultNeighbors } from './config/defaults';
+import { direction } from './config/defaults';
 
 function App() {
   return (
@@ -23,22 +37,28 @@ function App() {
 }
 
 function Scene() {
-  const direction = {
-    0: [1, 0],
-    1: [-1, 0],
-    2: [0, 1],
-    3: [0, -1],
-  };
+  /* STATE */
   const cameraControlsRef = useRef();
-  const [neighbors, setNeighbors] = useState({
-    '0,0': [0, 0, 0, 0],
-  });
+  const [isfirstTimeDataFetched, setIsfirstTimeDataFetched] = useState(false);
+  /* TODO: add a loader to wait for the above boolean to be true*/
+  const [neighbors, setNeighbors] = useState(defaultNeighbors);
   const [ghosts, setGhosts] = useState([0, 0, 0, 0]);
-  const [isAnyTileClicked, setIsAnyTileClicked] = useState({ is: false, tile: null });
-  const [latestTiles, setLatestTiles] = useState([
-    [0, 0],
-    [0, 1],
-  ]);
+  const [isAnyTileClicked, setIsAnyTileClicked] = useState({
+    is: false,
+    tile: null,
+  });
+  const [latestTiles, setLatestTiles] = useState(defaultLatestTiles);
+  const [{ tileColor, ghostColor, ghostTransparency, reset }, setControls] =
+    Controls();
+
+  /* EFFECTS */
+  useEffect(() => {
+    /* TODO: when reset is triggered, also reset all players' cameras */
+    if (reset) {
+      deleteAllNeighbors({ setControls });
+    }
+    /* eslint-disable-next-line */
+  }, [reset]);
 
   useEffect(() => {
     const position = [
@@ -50,11 +70,35 @@ function Scene() {
     cameraControlsRef.current?.setLookAt(...position, ...lookAt, true);
   }, [latestTiles]);
 
+  useEffect(() => {
+    getFirstTimeNeighbors({ setIsfirstTimeDataFetched, setNeighbors });
+    const neighborsRef = ref(database, NEIGHBORS);
+    return onValue(neighborsRef, (snapshot) => {
+      const data = snapshot.val();
+      // console.log(data);
+      setNeighbors(data);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (isfirstTimeDataFetched) {
+      set(ref(database, NEIGHBORS), neighbors);
+      console.log('setting neighbors');
+    }
+  }, [neighbors, isfirstTimeDataFetched]);
+
+  /* HELPER FUNCTIONS */
+  /* TODO: create interface to pass all required states to ghost functions and return all required curried functions */
   const showGhosts = helper_showGhosts({ setGhosts, direction, neighbors });
 
   const hideGhosts = () => helper_hideGhosts({ setGhosts });
 
-  const ghostToggle = helper_ghostToggle({ isAnyTileClicked, setIsAnyTileClicked, hideGhosts, showGhosts });
+  const ghostToggle = helper_ghostToggle({
+    isAnyTileClicked,
+    setIsAnyTileClicked,
+    hideGhosts,
+    showGhosts,
+  });
 
   const resurrectGhosts = helper_resurrectGhosts({
     ghostToggle,
@@ -67,12 +111,22 @@ function Scene() {
 
   return (
     <>
-      <CameraControls ref={cameraControlsRef} enabled />
+      <CameraControls ref={cameraControlsRef} enabled zoom={false} />
       {Object.keys(neighbors).map((id, key) => {
-        return <Tile {...{ id, ghostToggle }} key={key} />;
+        return <Tile {...{ id, ghostToggle, color: tileColor }} key={key} />;
       })}
       {ghosts.map((position, key) => {
-        return position ? <Ghost onGhostClick={resurrectGhosts} position={position} key={key} /> : null;
+        return position ? (
+          <Ghost
+            {...{
+              onGhostClick: resurrectGhosts,
+              position,
+              color: ghostColor,
+              transparency: ghostTransparency,
+            }}
+            key={key}
+          />
+        ) : null;
       })}
     </>
   );
