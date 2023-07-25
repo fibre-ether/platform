@@ -49,8 +49,10 @@ function Scene() {
     tile: null,
   });
   const [latestTiles, setLatestTiles] = useState(defaultLatestTiles);
-  const [{ tileColor, ghostColor, ghostTransparency, reset }, setControls] =
-    Controls();
+  const [
+    { tileColor, wallColor, ghostColor, ghostTransparency, reset },
+    setControls,
+  ] = Controls();
 
   /* EFFECTS */
   useEffect(() => {
@@ -117,12 +119,13 @@ function Scene() {
         return (
           <mesh key={rowKey}>
             {row.map((item, colKey) => {
-              return item === 1 ? (
+              return item.fill ? (
                 <Tile
                   {...{
+                    type: item.type,
                     coords: [rowKey, colKey],
                     ghostToggle,
-                    color: tileColor,
+                    colors: { tile: tileColor, wall: wallColor },
                   }}
                   key={colKey}
                 />

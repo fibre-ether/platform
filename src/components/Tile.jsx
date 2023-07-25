@@ -2,11 +2,19 @@ import { Box } from '@react-three/drei';
 import { MeshStandardMaterial } from 'three';
 import { tile } from '../config/tile-config';
 import { useMemo } from 'react';
-import { convertCoordsToOrigin } from '../config/defaults';
+import { CELL, convertCoordsToOrigin } from '../config/defaults';
 
-function Tile({ coords, ghostToggle, color }) {
+function Tile({ type, coords, ghostToggle, colors }) {
   // const positionCoords = id.split(',').map((coord) => parseInt(coord));
-  const mat = useMemo(() => new MeshStandardMaterial({ color }), [color]);
+  const tileMat = useMemo(
+    () => new MeshStandardMaterial({ color: colors.tile }),
+    [colors]
+  );
+  const wallMat = useMemo(
+    () => new MeshStandardMaterial({ color: colors.wall }),
+    [colors]
+  );
+
   const coordsRelativeToOrigin = convertCoordsToOrigin(coords);
   const position = [coordsRelativeToOrigin[0], 0, coordsRelativeToOrigin[1]];
   return (
@@ -14,8 +22,8 @@ function Tile({ coords, ghostToggle, color }) {
       <Box
         args={tile.size}
         position={position}
-        onClick={() => ghostToggle(coords)}
-        material={mat}
+        onClick={() => (type == CELL.tile ? ghostToggle(coords) : null)}
+        material={type == CELL.tile ? tileMat : wallMat}
       />
     </>
   );

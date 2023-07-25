@@ -2,7 +2,7 @@
 //   return id.split(',').map((coord) => parseInt(coord));
 // };
 
-import { convertCoordsToOrigin } from "../config/defaults";
+import { convertCoordsToOrigin, getTileObject } from "../config/defaults";
 
 
 // const getTileID = (tile) => {
@@ -13,7 +13,7 @@ export const helper_showGhosts =
   ({ setGhosts, direction, neighbors }) =>
   (coords) => {
     setGhosts((state) =>
-      state.map((item, key) => {
+    state.map((item, key) => {
         const newItem = [
           coords[0] + direction[key][0],
           coords[1] + direction[key][1],
@@ -24,7 +24,7 @@ export const helper_showGhosts =
         //     neighbors[newItem[0]][newItem[1]]
         //   }`
         // );
-        if (!neighbors[newItem[0]][newItem[1]]) {
+        if (!neighbors[newItem[0]][newItem[1]].fill) {
           // console.log('returning new ghost: ' + String(newItem));
           return newItem;
         }
@@ -70,9 +70,11 @@ export const helper_resurrectGhosts =
     const ghostX = coords[0];
     const ghostY = coords[1];
 
+    const newTile = getTileObject()
+
     setNeighbors((state) => [
       ...state.slice(0, ghostX),
-      [...state[ghostX].slice(0, ghostY), 1, ...state[ghostX].slice(ghostY+1)],
+      [...state[ghostX].slice(0, ghostY), newTile, ...state[ghostX].slice(ghostY+1)],
       ...state.slice(ghostX + 1),
     ]);
   };

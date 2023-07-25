@@ -1,22 +1,45 @@
-const BOARD_WIDTH = 10;
-const BOARD_HEIGHT = 10;
+const BOARD_WIDTH = 11;
+const BOARD_HEIGHT = 11;
+
+export const CELL = {
+  // empty: 'empty',
+  tile: 'tile',
+  wall: 'wall',
+};
 
 export const boardMiddle = {
   x: Math.floor(BOARD_WIDTH / 2),
   y: Math.floor(BOARD_HEIGHT / 2),
 };
 
-export const convertCoordsToOrigin = (coords) => {
-  const newCoords = [coords[0]-boardMiddle.x,coords[1]-boardMiddle.y]
-  return newCoords
+export const getTileObject = (type=CELL.tile) => {
+  return { type, fill:true };
+};
+
+const getEmptySpaceObject = () => {
+  return {fill:false}
 }
 
-// (new Array(60)).fill().map(function(){ return new Array(30).fill(false);})
+export const convertCoordsToOrigin = (coords) => {
+  const newCoords = [coords[0] - boardMiddle.x, coords[1] - boardMiddle.y];
+  return newCoords;
+};
+
 const emptyBoard = new Array(BOARD_HEIGHT).fill().map(() => {
-  return new Array(BOARD_WIDTH).fill(0);
+  return new Array(BOARD_WIDTH).fill(getEmptySpaceObject);
 });
 
-emptyBoard[boardMiddle.x][boardMiddle.y] = 1;
+// setting starting tile
+emptyBoard[boardMiddle.x][boardMiddle.y] = getTileObject();
+
+//setting boundaries
+emptyBoard[0] = emptyBoard[0].map(()=>getTileObject(CELL.wall))
+emptyBoard[BOARD_WIDTH-1] = emptyBoard[0].map(()=>getTileObject(CELL.wall))
+
+for (let i = 1; i<BOARD_WIDTH-1; i++) {
+  emptyBoard[i][0] = getTileObject(CELL.wall)
+  emptyBoard[i][BOARD_HEIGHT-1] = getTileObject(CELL.wall)
+}
 
 export const defaultNeighbors = emptyBoard;
 
