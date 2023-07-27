@@ -1,5 +1,12 @@
-const BOARD_WIDTH = 11;
-const BOARD_HEIGHT = 11;
+/* camera  */
+export const CAMERA_HEIGHT = 2
+export const DISTANCE_BEHIND_TILE = 5
+
+
+
+/* baord */
+const BOARD_WIDTH = 51;
+const BOARD_HEIGHT = 51;
 
 export const CELL = {
   // empty: 'empty',
@@ -26,7 +33,7 @@ export const convertCoordsToOrigin = (coords) => {
 };
 
 const emptyBoard = new Array(BOARD_HEIGHT).fill().map(() => {
-  return new Array(BOARD_WIDTH).fill(getEmptySpaceObject);
+  return new Array(BOARD_WIDTH).fill(getEmptySpaceObject());
 });
 
 // setting starting tile

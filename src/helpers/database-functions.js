@@ -1,17 +1,25 @@
-import { child, get, ref, set } from "firebase/database";
-import { NEIGHBORS, database } from "../config/firebase";
-import { defaultNeighbors } from "../config/defaults";
+import { child, get, ref, set } from 'firebase/database';
+import { NEIGHBORS, database } from '../config/firebase';
+import { defaultNeighbors } from '../config/defaults';
 
-export const getFirstTimeNeighbors = ({setIsfirstTimeDataFetched, setNeighbors}) => {
+export const setFirebaseNeighbors = (neighbors) => {
+  set(ref(database, NEIGHBORS), neighbors);
+};
+
+export const getFirstTimeNeighbors = ({
+  setIsfirstTimeDataFetched,
+  setNeighbors,
+}) => {
   const dbRef = ref(database);
   get(child(dbRef, NEIGHBORS))
     .then((snapshot) => {
       if (snapshot.exists()) {
-        const data = snapshot.val()
+        const data = snapshot.val();
         console.log(data);
-        setNeighbors(data)
-        setIsfirstTimeDataFetched(true)
+        setNeighbors(data);
+        setIsfirstTimeDataFetched(true);
       } else {
+        setFirebaseNeighbors(defaultNeighbors);
         console.log('No data available');
       }
     })
@@ -20,7 +28,8 @@ export const getFirstTimeNeighbors = ({setIsfirstTimeDataFetched, setNeighbors})
     });
 };
 
-export const deleteAllNeighbors = ({setControls}) => {
-    set(ref(database, NEIGHBORS), defaultNeighbors);
-    setControls({reset: false})
-}
+export const resetNeighbors = ({ setControls }) => {
+  console.log(defaultNeighbors);
+  setFirebaseNeighbors(defaultNeighbors);
+  setControls({ reset: false });
+};
